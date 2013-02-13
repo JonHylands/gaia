@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="pragma" content="no-cache" />
+    <title>API Timer</title>
+    <link rel="stylesheet" type="text/css" href="shared/style/buttons.css" />
+    <link rel="stylesheet" type="text/css" href="shared/style/headers.css" />
+    <link rel="stylesheet" type="text/css" href="shared/style/switches.css" />
+    <link rel="stylesheet" type="text/css" href="shared/style/input_areas.css" />
+    <link rel="stylesheet" type="text/css" href="style/apitimer.css" />
+    <script type="application/javascript" src="js/apitimer.js"></script>
+
+  </head>
+  <body role="application">
+    <section role="region">
+      <header>
+        <h1>API Timer</h1>
+      </header>
+    </section>
+
+    <section role="region">
+      <header>
+        <h1 id="h1-contacts" data-hide="contacts" class="bb-docs">Contacts</h1>
+      </header>
+      <div class="bb-docs" id="contacts">
+        <button id="contacts-readall">Read All Contacts...</button>
+      </div>
+    </section>
+
+    <section role="region">
+      <header>
+        <h1 id="h1-sms" data-hide="sms" class="bb-docs">SMS</h1>
+      </header>
+      <div class="bb-docs" id="sms">
+        <button id="sms-readall">Read All Messages...</button>
+      </div>
+    </section>
+
+    <div>
+      <span><p></p></span>
+      <span>Status:<br></br></span>
+      <span id="status-text"></span>
+      <span><p></p></span>
+    </div>
+
+  </body>
+</html>
