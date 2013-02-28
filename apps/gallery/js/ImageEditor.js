@@ -339,6 +339,37 @@ function saveEditedImage() {
   });
 }
 
+
+ function createThumbnailFromSource(fullSizeImage, sourceRectangle, thumbnailWidth, callback) {
+    // Create a thumbnail image
+    var canvas = document.createElement('canvas');
+    var context = canvas.getContext('2d');
+    var fullSizeWidth = fullSizeImage.width;
+    var fullSizeHeight = fullSizeImage.height;
+    // infer the thumbnailHeight such that the aspect ratio stays the same
+    var thumbnailHeight = fullSizeHeight * thumbnailWidth / fullSizeWidth;
+    var scalex = thumbnailWidth / fullSizeWidth;
+    var scaley = thumbnailHeight / fullSizeHeight;
+    var scale = Math.min(Math.min(scalex, scaley), 1);
+
+    var thumbRectangle = {};
+    thumbRectangle.w = Math.floor(sourceRectangle.w * scale);
+    thumbRectangle.h = Math.floor(sourceRectangle.h * scale);
+    thumbRectangle.x = Math.floor((thumbnailWidth - thumbRectangle.w) / 2);
+    thumbRectangle.y = Math.floor((thumbnailHeight - thumbRectangle.h) / 2);
+    
+    canvas.width = thumbnailWidth;
+    canvas.height = thumbnailHeight;
+
+    // Draw that region of the image into the canvas, scaling it down
+    context.drawImage(fullSizeImage, sourceRectangle.x, sourceRectangle.y, sourceRectangle.w, sourceRectangle.h,
+                      thumbRectangle.x, thumbRectangle.y, thumbRectangle.w, thumbRectangle.h);
+
+    canvas.toBlob(callback, 'image/jpeg');
+  }
+
+
+
 /*
  * ImageEditor.js: simple image editing and previews in a <canvas> element.
  *
@@ -388,12 +419,20 @@ function ImageEditor(imageURL, container, edits, ready) {
     // Initialize the crop region to the full size of the original image
     self.resetCropRegion();
 
-    // Display an edited preview of it
-    self.edit();
-
-    // If the constructor had a ready callback argument, call it now
-    if (ready)
-      ready();
+    createThumbnailFromSource(self.original,  self.source, self.previewCanvas.width,
+      function(thumbnail) {
+        self.originalSmall = new Image();
+        self.originalSmall.src = URL.createObjectURL(thumbnail);
+        
+        self.originalSmall.onload = function() {
+          // Display an edited preview of it
+          self.edit();
+ 
+          // If the constructor had a ready callback argument, call it now
+          if (ready)
+            ready();
+        };
+      });
   }
 
   // The canvas that displays the preview
@@ -425,20 +464,25 @@ ImageEditor.prototype.edit = function() {
 
   // Source image dimensions
   var source = this.source;
+  var smallSource = {};
+  smallSource.x = 0;
+  smallSource.y = 0;
+  smallSource.w = this.originalSmall.width;
+  smallSource.h = this.originalSmall.height;
 
   // Compute the destination rectangle in the preview canvas
   var dest = this.dest;
-  var scalex = canvas.width / source.w;
-  var scaley = canvas.height / source.h;
+  var scalex = canvas.width / smallSource.w;
+  var scaley = canvas.height / smallSource.h;
   var scale = Math.min(Math.min(scalex, scaley), 1);
 
-  dest.w = Math.floor(source.w * scale);
-  dest.h = Math.floor(source.h * scale);
+  dest.w = Math.floor(smallSource.w * scale);
+  dest.h = Math.floor(smallSource.h * scale);
   dest.x = Math.floor((canvas.width - dest.w) / 2);
   dest.y = Math.floor((canvas.height - dest.h) / 2);
-
-  this.processor.draw(this.original,
-                      source.x, source.y, source.w, source.h,
+  
+  this.processor.draw(this.originalSmall,
+                      smallSource.x, smallSource.y, smallSource.w, smallSource.h,
                       dest.x, dest.y, dest.w, dest.h,
                       this.edits);
 };
@@ -461,11 +505,14 @@ ImageEditor.prototype.getFullSizeBlob = function(type, callback) {
                  this.edits);
 
   // Now get the canvas contents as a file and pass to the callback
-  callback(canvas.mozGetAsFile('', type));
+  // callback(canvas.mozGetAsFile('', type));
+  canvas.toBlob(function(blobData) {
+    callback(blobData);
 
-  // Deallocate stuff
-  processor.destroy();
-  canvas.width = 0;
+    // Deallocate stuff    
+	processor.destroy();
+	canvas.width = 0;
+   });
 };
 
 
@@ -512,6 +559,7 @@ ImageEditor.prototype.resetCropRegion = function resetCropRegion() {
   this.source.y = 0;
   this.source.w = this.original.width;
   this.source.h = this.original.height;
+
 };
 
 ImageEditor.prototype.drawCropControls = function(handle) {
@@ -845,13 +893,23 @@ ImageEditor.prototype.cropImage = function() {
   this.source.y += top;
   this.source.w = right - left;
   this.source.h = bottom - top;
+  
+  var self = this;
 
-  // Adjust the image
-  this.edit();
+  createThumbnailFromSource(this.original,  this.source, this.previewCanvas.width,
+    function(thumbnail) {
+      self.originalSmall = new Image();
+      self.originalSmall.src = URL.createObjectURL(thumbnail);
+      
+      self.originalSmall.onload = function() {
+      // Adjust the image
+        self.edit();
 
-  // Hide and reshow the crop overlay to reset it to match the new image size
-  this.hideCropOverlay();
-  this.showCropOverlay();
+        // Hide and reshow the crop overlay to reset it to match the new image size
+        self.hideCropOverlay();
+        self.showCropOverlay();
+      }
+    });
 };
 
 // Restore the image to its full original size
