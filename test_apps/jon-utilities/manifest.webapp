@@ -1,0 +1,21 @@
+{
+  "name": "Jon Utilities",
+  "description": "Jon Utilities",
+  "type": "certified",
+  "launch_path": "/index.html",
+  "developer": {
+    "name": "jonhylands",
+    "url": "https://github.com/JonHylands"
+  },
+  "permissions": {
+    "device-storage:sdcard":{ "access": "readonly" },
+    "contacts":{ "access": "readonly" },
+    "sms":{},
+    "mobileconnection":{}
+  },
+  "icons": {
+    "128": "/style/jon-util-128.png",
+    "64": "/style/jon-util-64.png"
+  },
+  "orientation": "portrait-primary"
+}
